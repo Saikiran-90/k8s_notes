@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata: 
+   name: my-service
+spec: 
+  ports:
+    - port: 8000
+      targetPort: 80
+      protocol: TCP
+  selector: 
+     app: dep-app
+
+
+
+
+
+
+
+

@@ -1,0 +1,613 @@
+                              K8s
+                          --_-)(--_- 
+
+
+def: it is portable, extensible, open source tool to ship containers   
+      from source to dest. 
+
+K8s: pilot(GREEK)
+
+Master Node components:--
+
+  etcd- it is key value store, where it stores every transactions in k8s.
+
+ kube-control manager: it make sure that everything is under control, 
+like it checks all the replications are in control. Also it manage the things.
+
+
+kube-apiserver: it is the heart of k8s, as it can expose the entire k8s architecture.
+
+[Note: Only kube-apiserver has access to etcd(db) no other components can 
+talk to etcd, if other components has to talk then they have to go through kube-apiserver.]
+
+Protocols Involved for communication: gRPC(google remote procedure call)(Only etcd), REST API(All components except etcd).
+
+Protobuf in k8s: used for serilization-deserialization     
+
+[Note: The network plugin is configured to assign IP addresses to Pods.
+       The kube-apiserver is configured to assign IP addresses to Services.
+       The kubelet or the cloud-controller-manager is configured to assign IP addresses to Nodes.]         
+
+                          |-Kubelet
+Worker Node:it conatins---|-Kube-proxy
+                          |-container run-time
+
+  |-kubelet: it acts like co-pilot for master node, it is responsible for whether ,for ex. container is running on the node, 
+if running is failed, then it reports to kube-apiserver and kube-apiserver talk to etcd and make transaction of failed status.
+
+ 
+
+
+               send report                         talk to etcd to create a transaction
+    kubelet    --------------->    kube-apiserver  ----------------------------------------> etcd[create a transaction]
+  ___________
+   container
+    runtime
+
+
+  
+|- kube-proxy: it is responsible for make use of networking connections, or dealing with networking part.
+
+
+
+
+
+K8s Members/services--:
+
+Pods: smallest exectuable unit in k8s to run containers.(executable in the sense, they have storage,
+                                                        compute and necessary env to run containers)
+     
+                  deployed to cont.               run only in pods
+    flow: images -------------------> containers ------------------------> Pods
+
+
+imp: pods are efemeral i.e when a pod is deleted entire data is lost, 
+      and we can't retrieve it back until we attach extra volume to it.
+    
+   So, to avoid such data loss, we have deployment, in that replaca set is defined, where no. of pods is defined to run, 
+   if one pod is deleted it make sure that another will contain the same container.
+
+
+kubectl: it is a tool/utility used to communicate with kube-apiserver.
+
+
+
+ 
+            overview:                                                            ------->(mean contains)
+ 
+ 
+         cluster -----------> nodes ----------> pods -------------> containers -------------> runs image
+
+
+
+
+Note: In GKE cluster, the number_of_nodes count is worker node count,
+       master node is managed by Google. 
+
+
+Two types of Cluster creation in Gcloud:
+i.Standard cluster:  The user has to manage everything like define number of nodes, networking, or machines etc.
+ii. Auto-Pilot cluster: It allows user to mostly focus on dev and ops,mean it manages the everything like nodes,networking etc.
+
+
+CNI(container network interface): it is primarily used to assign IPs to pods and nodes in older versions, but now they provide o11y as well.
+
+
+
+
+NutShell:
+
+i.create a yaml file -->pod_name.yaml
+ii.create pod 
+  run --> kubectl create -f pod_name.yaml
+iii. check pod
+    run --> kubectl get pods (check whether the pod is running)
+            kubectl get pods -o wide (gives more info with node).
+iv.check node
+      run--> kubectl get nodes
+
+v.if any changes are made to yaml, then directly apply changes to the pod
+   run --> kubectl apply -f pod_name.yaml.
+
+[Note: the image which is defined in the conatiners filed inside yaml file is the image run inside a pod.]
+            
+vi. check logs whether the container is running.
+    run--> kubectl logs <pod-name> -c <container-name>(which is define inside the yaml file).
+
+vii.To check specific pods
+   run--> kubectl get pod <pod_name>.              
+
+Viii. To delete a pod.
+      run--> kubectl delete pod <pod_name>.
+
+
+
+Yaml config:
+
+replicas: they are used to set the instances(identical copies) that represents pods, ultimately replicas mean identical pods.
+
+Kind: Pod
+  single instance, when deploying it only one instance is available.
+  So, when there is downtime, the pod will not available.
+
+Kind: Deployment
+    multiple instances, in this we can have identical copies of images which allows reliability, fault tolerance and availability.we replicate to have multiple pods.
+
+Kind: Service
+   This kind is primarily used for the expose of container image to the public.
+   Without kind:Service we can't expose the application to the public in K8s.
+ 
+Kind:Ingress
+   it helps to route the external HTTP/HTTPS traffic to the services, based on the rules defined in the ingress.
+
+Network Policies: theyused to control the traffic flow between the Pods within the cluster.
+
+To expose the Pod:
+
+i.create a pod with yaml (if for single instance use Kind:Pod else for
+                        multiple instance use Kind:Deployment).
+
+ii.create a service.yaml which is of kind:Service, define selector, port targetPort and type.
+    exp: 
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service 
+spec:
+  selector:
+    app: nginx-app /* name of the pod which has to be exposed */
+  ports:
+  - port: 9009 /* port of the service instance */
+    targetPort: 80 /* port of the pod */
+  type: LoadBalancer /* here GCP automatically configure loadbalancer */
+
+iii. expose kind:Service
+    run: kubectl expose <resource-type> <resource-name> --port=<port> --target-port=<target-port> --type=<service-type>
+     
+  explain-> <resource-type> : like Pod, Deployment , ReplicaSets etc.
+          <resource-name> : like pod_name which has to be exposed.
+
+        <service-type>: like LoadBalancer, NodePort, ClusterIP, etc.
+
+iv. kubectl get svc to get the info and external IP to check expose.
+
+
+Note: it is possible to expose the pod without using kind:Service,
+    but in the useCase of Productions it is not the best practise.
+
+
+Note: containerPort in pod.yaml should be the port that
+        the application is listening on the host.
+   ex: if the flask app on the vscode listens on port:5000
+     So, port:5000 is the containerPort on the pod.yaml
+
+      ex- service.yaml
+           apiVersion: v1
+kind: Service
+metadata:
+  name: f-serv
+spec:
+  selector:
+    name: flask
+
+  ports:
+  - port: 5200
+    targetPort: 9090
+  type: LoadBalancer
+---------------------
+pod.yaml
+
+apiVersion: v1 
+kind: Pod
+metadata:
+  name: new-pod
+  labels:
+    name: flask
+
+spec:
+    containers:
+    - name: flask-image
+      image: saikiran090/image-a1:v1.1
+      ports:
+      - containerPort: 9090
+-----------------------------------
+deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+  labels:
+    app: test-deployment
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: test-deployment
+  template:
+    metadata:
+      labels:
+        name: test-deployment
+    spec:
+      containers:
+      - name: dock-image
+        image: saikiran090/image-a1:v1.1
+        env:
+        - name: socket_tech_io  #Optaional if DNS is required
+          value: "dep-serv.default.svc.cluster.local"
+        ports:
+        - containerPort: 9090
+
+
+-> To overview the pod or deployment or service 
+    run, kubectl describe pods/deployments/services
+
+
+
+
+   Services, LoadBalancing and Networking in K8s
+--------------------------------------------------
+
+Service: it is a method to expose the running pods in the cluster.
+ 
+         -> it is an abstraction, each service obj contains endpoints(which are pods).
+
+with kind:Service, we can decouple multiple pods where they neeed not be rely on eachother.
+                  say: frontend-pod and backend-pod
+
+
+
+
+Ingress:
+ 
+An API object that manages the external access to the service in the cluster over HTTP/ HTTPS.
+
+it provide load balancing, SSL termination, virtual hosting, Externally-reachable URLs..
+
+
+Note: SSL is secure Socket layer protocol, which gives encryption, authentication etc.
+
+    Why Ingress terminate SSL?
+
+  => termination of SSL mean decrypting the traffic, 
+       So Ingress decrypt the traffic before sending it to the backend,
+     which helps to reduce the load on servers.
+
+ 
+ Notably: traffic coming into the Cluster is Ingress
+          
+-> It acts in a 7 layer HTTPS/HTTP router, that define rules to route the incoming HTTP/HTTPS
+   traffic to different services within the cluster.
+
+
+
+
+
+
+Architecture for Execution:
+step-1
+ pods are created and run on worker nodes, as worker_nodes contains container runtime env.
+
+step-2
+  kubelet in the worker_node is responsible for managing the pods running on its node.
+  Kubelet take care of tasks such as, pod creation, deletion, updation, monitoring health status
+  and reporting the node health status to the kube-apiserver.
+
+
+Volumes: It is a directory, which may or may not be empty, which is accessible to the containers in the Pod. 
+      The Directory is used to back the data of container files.
+
+Ephemeral Volume : it is a type of volume , where it stays until the Pod destroys.
+Persistent Volume: it is a type of volume, where it stats even though the pod destroys.
+
+
+commands:
+
+To create cluster on GKE: "gcloud container clusters create-auto $my_cluster --region $my_region"
+
+To view the cluster configs: "kubectl config view"
+
+To get cluster-contexts: kubectl config get-contexts and kubectl config current-contexts 
+
+
+
+Important Commands: 
+ 
+crictl : used to communicate with containers.
+
+journalctl : used to monitor logs of systemd troubleshooting purpose.
+
+cmd:
+journalctl
+journalctl --since yesterday -o json-pretty 
+
+
+[Note: worker node version always < master node version.]
+
+
+
+Init Containers: They run before app containers, if app container needs any dependency, libraries etc that will be packaged into init containers and will be downloaded while running successfully. They destroyed after the task is executed by them.
+       
+      -> we can define multiple init containers. 
+      -> First init container will run then,the app container run.
+      -> if any one of the multiple init containers fail, the app container won't run.      
+      -> if init containers fails, then entire app container will fail. 
+
+kubectl logs <pod_name> -c init-container : it returns what init container is executed when it run.
+
+
+kubectl exec -it <pod_name> -- bash : you enter into the container (or) can access container files/dirs.
+
+ex: init.yaml
+
+   apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app.kubernetes.io/name: MyApp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox:1.28
+    command: ['sh', '-c', 'echo The app is running! && sleep 3600']
+  initContainers:
+  - name: init-myservice
+    image: busybox:1.28
+    command: ['sh', '-c', "until nslookup myservice.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for myservice; sleep 2; done"]
+  - name: init-mydb
+    image: busybox:1.28
+    command: ['sh', '-c', "until nslookup mydb.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done"]
+
+
+[Note: we can run any type scripts in the pod,
+      ex: bash script, python script etc.]
+
+SideCar Containers: they run throughout the main application container and monitor the app container to make sure app conainer is running smoothly. They don't destroy after the defined task is executed. 
+
+ As same as init containers, but they stay as long as the app container terminated, where init cont don't.
+ 
+ ex: apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  labels:
+    app: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: myapp
+          image: alpine:latest
+          command: ['sh', '-c', 'while true; do echo "logging" >> /opt/logs.txt; sleep 1; done']
+          volumeMounts:
+            - name: data
+              mountPath: /opt
+      initContainers:
+        - name: logshipper
+          image: alpine:latest
+          restartPolicy: Always
+          command: ['sh', '-c', 'tail -F /opt/logs.txt']
+          volumeMounts:
+            - name: data
+              mountPath: /opt
+      volumes:
+        - name: data
+          emptyDir: {}
+
+[Note: from the above, the only field that differ init and sidecar is restartPolicy:Always, which makes sidecar cont. stay till the pod termination.]  
+
+
+pyton commanded yaml: 
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: time-keep
+spec:
+  containers:
+    - name: python
+      image: python:3
+      command:
+        - python
+        - -u
+        - -c
+        - |
+          import time
+          while True:
+               print("Current Time:", time.strftime("%Y-%m-%d %H:%M:%S"))
+               time.sleep(1)
+
+
+
+Labels: They are used to segregate the components in the pod, like with labels we can any with ease.
+ 
+kubectl get pods --show-labels: Shows the labels in all created pods.
+
+kubectl label pod -l <existing_label_name> <new_label_name> : Add the new label, where the existing pod is located in a pod.
+
+kubectl get pods -l <any_existing_label_name> : return the pod where the label is situated.
+
+
+Replicas: number of same pods of same configuration or different, which are defined in a pod.
+
+[Note: To know which are the pods being replicas, is by checking the field "ownershipReferrence" in the config file of the current_pod.]
+
+Annotations: The field which tells more about the pod, like timeStamp, who maintains the pod, from where the image is being pulled etc.
+
+[cmds: kubectl get deploy: to get kind:Deployment objects
+      kubectl get rs: to get replicaSet of the deployment obj.]
+ 
+Kubectl scale deploy <deployment_name> --replicas=<some_number> : to change the number of                 replicas through cli.
+
+[Note: While Deploying a prod/business application, consider below to make deployment
+       
+       i. Business Use-Case(Application-type): Diff business use-case, diff deployment 
+          startegy, like we go with Blue-Green, Canary, Roll-out(for 0% downtime), etc.
+
+      ii. What is the Error-Budget: Means, based on the avaialbility(SLA), how much downtime 
+          is permissable. i.e the business/application can tolerate such downtime is error 
+          budget. It is decided by SRE team.
+     iii. 
+]
+
+Cloud Terms: 
+  - SLA(service level agreements): it defines the availability of a service in cloud/ simple                     for how many mins it can go downtime. i.e based on SLA, cloud vendors compete each other.
+   ex: availabilty: 99.99%
+       downtime: 0.01%
+
+-- Suppose we made a release, If the release is going on wrong direction, then:
+   -Availability decreases
+   -Error Budget decreases
+  [Note: Error-Budget: it simply defines the amount of downtime in a system, should not exceed the availability perc. ex: availability-99.99% error-budget-0.01% mean, the error-budget goes upto 0.01%.]
+
+
+Rollout: To update the image configs in the config file, to create the debug image ,etc. 
+         there will be newer versions created after every updation, also we can rollback to  
+         the older versions.
+cmds: 
+kubectl set image deploy/<deployment_name> <container_name_in_config_file>=<updated_image>
+ 
+kubectl rollout stat deploy <deploy_name> : to check for the latest versions.
+
+kubectl rollout undo deploy <deploy_name> --to-revision=<version_no.> : to rollback to previous version.
+
+
+Service: It is an abstraction built in the deployment layer later.
+         basic need for service abs is to make application available to users.
+
+
+three types of Services: 
+i. Cluster IP: It is also called internal IP, where the application can run internally/personal usecases where there will be no public/external IP is allocated.
+
+ii. LoadBalancer: It is used when we want the application be available to all users, where we don't need to implement 
+                  loadbalancer in the backend. It is the best type of service to make the app available to public.
+
+iii. NodePort: It is a dangerous type, where it requires the static ip of the available nodes in the cluster, so with the  
+               static ip of the node, there can be any backdoor entries possible.
+
+iv. Headless Service: in this type, there is no internal/external IP assigned. It is mainly used for dbs, where concurrency is required , ensures that the particular data assigned to defined pod.
+
+
+Endpoints: it is an abstraction runs under Services, where it is used to group the resources like pods. 
+          
+[Note: Endpoints are deprectated due to its overhead, latency, RAM consumption,
+      beacause suppose, there are 100 pods in an endpoint, around 50 pods are evicted, then it's the responsibility of the
+      endpoint to remove the evicted pods, and create new pods, which gives the much load to the endpoint causing latency,latency, RAM consumption etc.] 
+
+Endpoint Slices: It is used to group the resources in each slices in a specified number. In this if a pod in a slice evicted then the pod will be created in another slice, which makes endpoint reliable, less cpu consumption.
+
+* kubectl get endpointslices --> to get endpointslices.
+
+[Note: Endpoints in Endpoint Slices are IP adrress of pods.] 
+
+
+* kubectl expose deploy <deploy_name> --type=LoadBalancer --port=8080 : to deploy the application to the public.
+
+Note: if type is not defined by-default it takes clusterIP, which run internally.
+
+Ingress: It is an abstraction, which comes before Service, which ensure to match incoming domain with particular Service.
+          
+Ingress Controller: It is responsible to route the incoming traffic to defined service. Routing can be domain-based or path-based.
+
+[Note: To decide which loadbalancer to use, we have to consider 2 points.
+       i. If traffic is internal ---> L4 LB
+      ii. If traffic is external ---> L7 LB     ]
+     
+
+Steps to deploy using Ingress:
+
+step-1: if needed install nginx-controller(apply a yaml file).
+
+step-2: create a deployment yaml with replicas of any number by defining an image application.
+ ex: apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: test-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+
+
+step-3: create a service yaml with selectors of deployment. 
+         [don't define any type, it will clusterIP by defualt.]
+   ex: apiVersion: v1
+kind: Service
+metadata:
+  name: test
+spec:
+  selector:
+    app.kubernetes.io/name: proxy
+  ports:
+  - name: name-of-service-port
+    protocol: TCP
+    port: 80
+    targetPort: 80
+
+
+step-4: now, create a ingress yaml for defined service.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minimal-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx-example
+  rules:
+  - http:
+      paths:
+      - path: /testpath
+        pathType: Prefix
+        backend:
+          service:
+            name: test
+            port:
+              number: 80
+
+here, we have service name as test with port:80,and if the path request for /testpath then the ingress route the req to the above service.
+
+Disadvantages Ingress: 
+- cluttering of application components, as the whole application depends upon single ingress. So, in that case we use Gateway api.
+
+
+Ports in svc: 
+  >NodePort: Nothing but port of a node.
+  
+  >TargetPort: port of the container. 
+       (Dockerfile: EXPOSE <port_no> and ContainerPort: <port_no> and svc: targetport 
+     should be same.)
+  > port: nothing but svc's port.
+
+                
+    
+     
+
+
+
+
+
+    
+

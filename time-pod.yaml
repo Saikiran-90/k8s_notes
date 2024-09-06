@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: time-keep
+spec:
+  containers:
+    - name: python
+      image: python:3
+      command:
+        - python
+        - -u
+        - -c
+        - |
+          import time
+          while True:
+               print("Current Time:", time.strftime("%Y-%m-%d %H:%M:%S"))
+               time.sleep(1)
+

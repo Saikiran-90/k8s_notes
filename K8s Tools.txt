@@ -1,0 +1,12 @@
+     K8s Tools
+
+1. K9s - GUI representation and monitoring tool for the kube-api resources used in the production.
+
+2. Trivy - it scans the vulnerability of the images, It consist of a db, where all the CVE (common vulnerabilities exposure) are stored.
+           Some cmds: 
+                      trivy image <image_name> : to get all types of vulnerabilities.
+                      trivy image <image_nmae> --severity <Level_of_vulnerability (HIGH,LOW,MEDIUM,CRITICAL)>: to check specific vulnerability based on the severity of the image
+
+3. Kyverno: It is a k8s native tools, which is used to twig admission controls (change the form of admission controls (or) add/delete the                           admission controllers which are mutating webhooks/ validating webhooks).
+ UseCases: -allocate cpu utilization
+           -to run specific image, it will do.

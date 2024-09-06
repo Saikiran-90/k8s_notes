@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app.kubernetes.io/name: MyApp
+spec:
+  containers:
+  - name: myapp-container
+    image: nginx
+  initContainers:
+  - name: init-myservice
+    image: ubuntu
+    restartPolicy: Always
+    command: ["/bin/bash", "-c"]
+    args: ["while true; do -b -n l >> resources.txt; sleep 10; done"]

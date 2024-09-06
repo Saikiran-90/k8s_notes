@@ -1,0 +1,48 @@
+k8s-interview_ques
+
+1. If you delete the cluster, do all resources on it will be deleted?
+=> No, excpet persistent volume, everything get deleted.
+   Reason is to avoid the data loss on pv.
+
+2. How nodes are defined to particular pod to run?
+=> Most of the time the algorithm works as, the node which has more resources unused the pod     is scheduled to that node, internally the balance is maintained. 
+   If multiple nodes have same resources then the scheduling is randomized.
+
+3.  Why Ingress terminate SSL?
+=> termination of SSL mean decrypting the traffic, 
+   So Ingress decrypt the traffic before sending it to the backend,
+   which helps to reduce the load on servers.
+
+4. Why doesn't etcd store encrypted data? 
+Reason: Storing encrypted data in etcd adds additional overhead, and etcd is typically deployed in secure environments.
+
+5. Why doesn't the Kubernetes Controller Manager rely on Kubelet? 
+Reason: The Kubernetes Controller Manager (KCM) manages resources at the cluster level, whereas Kubelet manages the lifecycle of individual pods and does not maintain a complete view of the entire cluster.
+
+
+Deployments:
+A Deployment manages a set of identical Pods, ensuring that a specified number of Pods are running at all times.
+When you create a Deployment, Kubernetes creates ReplicaSets, which in turn create the actual Pods.
+
+ReplicaSets:
+A ReplicaSet ensures that a specified number of identical Pods are running. It creates and manages these Pods based on a template.
+When you create a ReplicaSet, Kubernetes directly creates the corresponding Pods.
+
+StatefulSets:
+A StatefulSet is used for managing stateful applications. It ensures that Pods are created with unique, stable identities and persistent storage.
+When you create a StatefulSet, Kubernetes creates Pods with consistent network identities and stable storage.
+
+DaemonSets:
+A DaemonSet ensures that a copy of a Pod runs on every node (or a subset of nodes) in the cluster.
+When you create a DaemonSet, Kubernetes creates a Pod on each selected node.
+Jobs and CronJobs:
+
+A Job creates Pods that run to completion, usually for batch processing tasks.
+A CronJob creates Jobs on a scheduled basis, which in turn create Pods.
+Services:
+
+Although Services are not directly responsible for creating Pods, they abstract the networking and allow communication between different sets of Pods.
+
+6. Why NodePort type service is dangerous?
+ => In Nodeport we have to open a static IP, so with this all ports of the node will be opened, due to which any backdoor 
+    entry is possible by anyone if restrictions to that port is not defined. In this case in many big tech companies nodeport is restricted.

@@ -1,0 +1,21 @@
+      YAML
+
+YAML stands for: YAML Ain't Markup Language.
+
+It is case sensitive
+Human readable
+
+Serialization:  [array] (array of data) client-1
+                  |
+                  |                    
+                [Byte streams of data] 
+                 [byte stream of array]
+                   |
+                   |
+                   [array] client-2
+
+the process of converting array of data into byte stream is called serialization.
+
+
+YAML is superset of JSON.
+

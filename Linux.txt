@@ -1,0 +1,28 @@
+  Linux
+
+-> ls    :list of files/directories
+-> ls -a :list of files incl hidden files/dirs
+-> ls -ll:desc of created file
+
+-> ps aux : list out the running processes.
+
+-> echo <name> | base64 : to encode the name
+-> echo <encoded_name> | base64 --decode: to decode the encoded name
+-> head file_name: return the first 10 lines of content of your file.
+-> tail file_name: return bottom 10 lines of content from your file.
+
+-> tcpdump: To track packets, check what are the vms connected.
+
+-> tcpdump -c 20 : limit the packets to 20.
+
+-> tcpdump -i <eth_name> -c 20 > save.txt : to save the packets into file.
+
+-> tcpdump -i <eth_name> -c 2 >> save.txt : to save and append the packets in the same file.
+
+[Note : if we don't use '>>' instead we use only '>' then, previous info will erased.]
+
+->ctr / crictl : used to communicate  directly with container of any type.
+                 But, ctr is majorly for containerd. 
+->journalctl: it used to store the logs for systemd.
+
+[Systemd: at the time boot up, the hardware initializes andin kernel's RAM OS is being loaded the request goes to systemd, now the service will be run by it.]

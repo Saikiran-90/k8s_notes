@@ -1,0 +1,19 @@
+   Kind
+
+=> It is a type of cluster creation like minikube, where we can run kubernetes clusters locally using Kind.
+
+
+Installation: 
+choco install kind
+
+Get Started:
+-> kind create cluster --name <cluster_name> : to create a cluster with a single node only.
+
+[Note: to create multiple node cluster, we can configure it using yaml files, like we do in GKE.]
+
+-> kind get clusters : returns available/created clusters.
+
+-> kind create cluster --name <cluster_name> --config config.yaml : to create a cluster based on the yaml file.
+
+
+ 
