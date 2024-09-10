@@ -1,5 +1,5 @@
    Kind
-
+=> Stands for 'Kubernetes in Docker'
 => It is a type of cluster creation like minikube, where we can run kubernetes clusters locally using Kind.
 
 
